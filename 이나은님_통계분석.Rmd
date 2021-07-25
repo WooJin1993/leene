@@ -1,0 +1,797 @@
+---
+title: "이나은님 통계분석"
+author: "안우진"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    fig_width: 14
+    fig_height: 10
+    fig.align : 'center'
+    toc: yes
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, comment = "")
+```
+
+<style type="text/css">
+.main-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+# 패키지 로드 및 옵션 설정
+
+```{r}
+rm(list = ls())
+
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(glue)
+library(lawstat)
+library(readr)
+
+options(scipen = 999) # turn-off scientific notation like 1e+48
+options(tibble.width = Inf)
+`%!in%` <- Negate(`%in%`)
+source("./functions.R")
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+# 데이터 불러오기
+
+```{r}
+data <- read_csv("./data/실험수치.csv")
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+# 알레르기 있는 샛별이와 송이를 포함한 결과 (n = 20)
+
+## 30초 전후 비교
+
+### 양측 검정
+
+```{r}
+print_results(data, time = "30초")
+```
+
+```{r}
+print_results(data, time = "30초", tewl = "greater", sh = "less", tem = "two.sided")
+```
+
+```{r}
+time <- "30초"
+data30 <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+
+# --- TEWL ---
+tewl_before30 <- data30["TEWL_Mean"] %>% slice(seq(1, nrow(data30), by = 2)) %>% pull("TEWL_Mean")
+tewl_after30 <- data30["TEWL_Mean"] %>% slice(seq(2, nrow(data30), by = 2)) %>% pull("TEWL_Mean")
+tewl_diff30 <- tewl_after30 - tewl_before30
+
+# normality test (정규성 검정)
+tewl30_sw <- shapiro.test(tewl_diff30)
+
+# paired t-test (대응표본 t검정)
+if (tewl30_sw$p.value > 0.05) {
+    tewl30_test <- t.test(tewl_before30, tewl_after30, paired = TRUE)
+} else {
+    tewl30_test <- wilcox.test(tewl_before30, tewl_after30, paired = TRUE)
+}
+
+if (tewl30_test$p.value > 0.05) {
+    result_tewl30 <- "유의미한 변화 없음"
+} else {
+    result_tewl30 <- "유의미한 변화 있음"
+}
+
+# --- SH ---
+sh_before30 <- data30["SH_Mean"] %>% slice(seq(1, nrow(data30), by = 2)) %>% pull("SH_Mean")
+sh_after30 <- data30["SH_Mean"] %>% slice(seq(2, nrow(data30), by = 2)) %>% pull("SH_Mean")
+sh_diff30 <- sh_after30 - sh_before30
+
+# normality test (정규성 검정)
+sh30_sw <- shapiro.test(sh_diff30) 
+
+# paired t-test (대응표본 t검정)
+if (sh30_sw$p.value > 0.05) {
+    sh30_test <- t.test(sh_before30, sh_after30, paired = TRUE)
+} else {
+    sh30_test <- wilcox.test(sh_before30, sh_after30, paired = TRUE)
+}
+
+if (sh30_test$p.value > 0.05) {
+    result_sh30 <- "유의미한 변화 없음"
+} else {
+    result_sh30 <- "유의미한 변화 있음"
+}
+
+# --- Tem ---
+tem_before30 <- data30["Tem_Mean"] %>% slice(seq(1, nrow(data30), by = 2)) %>% pull("Tem_Mean")
+tem_after30 <- data30["Tem_Mean"] %>% slice(seq(2, nrow(data30), by = 2)) %>% pull("Tem_Mean")
+tem_diff30 <- tem_after30 - tem_before30
+
+# normality test (정규성 검정)
+tem30_sw <- shapiro.test(tem_diff30) 
+
+# paired t-test (대응표본 t검정)
+if (tem30_sw$p.value > 0.05) {
+    tem30_test <- t.test(tem_before30, tem_after30, paired = TRUE)
+} else {
+    tem30_test <- wilcox.test(tem_before30, tem_after30, paired = TRUE)
+}
+
+if (tem30_test$p.value > 0.05) {
+    result_tem30 <- "유의미한 변화 없음"
+} else {
+    result_tem30 <- "유의미한 변화 있음"
+}
+
+print(glue(
+    "{time} 전후로 경피수분손실도(TEWL)에 {result_tewl30}
+    {time} 전후로 피부수화도(SH)에 {result_sh30}
+    {time} 전후로 체표면온도(Tem)에 {result_tem30}"
+    ))
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+## 1분 전후 비교
+
+```{r}
+time <- "1분"
+data60 <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+
+# --- TEWL ---
+tewl_before60 <- data60["TEWL_Mean"] %>% slice(seq(1, nrow(data60), by = 2)) %>% pull("TEWL_Mean")
+tewl_after60 <- data60["TEWL_Mean"] %>% slice(seq(2, nrow(data60), by = 2)) %>% pull("TEWL_Mean")
+tewl_diff60 <- tewl_after60 - tewl_before60
+
+# normality test (정규성 검정)
+tewl60_sw <- shapiro.test(tewl_diff60)
+
+# paired t-test (대응표본 t검정)
+if (tewl60_sw$p.value > 0.05) {
+    tewl60_test <- t.test(tewl_before60, tewl_after60, paired = TRUE)
+} else {
+    tewl60_test <- wilcox.test(tewl_before60, tewl_after60, paired = TRUE)
+}
+
+if (tewl60_test$p.value > 0.05) {
+    result_tewl60 <- "유의미한 변화 없음"
+} else {
+    result_tewl60 <- "유의미한 변화 있음"
+}
+
+# --- SH ---
+sh_before60 <- data60["SH_Mean"] %>% slice(seq(1, nrow(data60), by = 2)) %>% pull("SH_Mean")
+sh_after60 <- data60["SH_Mean"] %>% slice(seq(2, nrow(data60), by = 2)) %>% pull("SH_Mean")
+sh_diff60 <- sh_after60 - sh_before60
+
+# normality test (정규성 검정)
+sh60_sw <- shapiro.test(sh_diff60) 
+
+# paired t-test (대응표본 t검정)
+if (sh60_sw$p.value > 0.05) {
+    sh60_test <- t.test(sh_before60, sh_after60, paired = TRUE)
+} else {
+    sh60_test <- wilcox.test(sh_before60, sh_after60, paired = TRUE)
+}
+
+if (sh60_test$p.value > 0.05) {
+    result_sh60 <- "유의미한 변화 없음"
+} else {
+    result_sh60 <- "유의미한 변화 있음"
+}
+
+# --- Tem ---
+tem_before60 <- data60["Tem_Mean"] %>% slice(seq(1, nrow(data60), by = 2)) %>% pull("Tem_Mean")
+tem_after60 <- data60["Tem_Mean"] %>% slice(seq(2, nrow(data60), by = 2)) %>% pull("Tem_Mean")
+tem_diff60 <- tem_after60 - tem_before60
+
+# normality test (정규성 검정)
+tem60_sw <- shapiro.test(tem_diff60) 
+
+# paired t-test (대응표본 t검정)
+if (tem60_sw$p.value > 0.05) {
+    tem60_test <- t.test(tem_before60, tem_after60, paired = TRUE)
+} else {
+    tem60_test <- wilcox.test(tem_before60, tem_after60, paired = TRUE)
+}
+
+if (tem60_test$p.value > 0.05) {
+    result_tem60 <- "유의미한 변화 없음"
+} else {
+    result_tem60 <- "유의미한 변화 있음"
+}
+
+print(glue(
+    "{time} 전후로 경피수분손실도(TEWL)에 {result_tewl60}
+    {time} 전후로 피부수화도(SH)에 {result_sh60}
+    {time} 전후로 체표면온도(Tem)에 {result_tem60}"
+    ))
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+## 2분 전후 비교
+
+```{r}
+time <- "2분"
+data120 <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+
+# --- TEWL ---
+tewl_before120 <- data120["TEWL_Mean"] %>% slice(seq(1, nrow(data120), by = 2)) %>% pull("TEWL_Mean")
+tewl_after120 <- data120["TEWL_Mean"] %>% slice(seq(2, nrow(data120), by = 2)) %>% pull("TEWL_Mean")
+tewl_diff120 <- tewl_after120 - tewl_before120
+
+# normality test (정규성 검정)
+tewl120_sw <- shapiro.test(tewl_diff120)
+
+# paired t-test (대응표본 t검정)
+if (tewl120_sw$p.value > 0.05) {
+    tewl120_test <- t.test(tewl_before120, tewl_after120, paired = TRUE)
+} else {
+    tewl120_test <- wilcox.test(tewl_before120, tewl_after120, paired = TRUE)
+}
+
+if (tewl120_test$p.value > 0.05) {
+    result_tewl120 <- "유의미한 변화 없음"
+} else {
+    result_tewl120 <- "유의미한 변화 있음"
+}
+
+# --- SH ---
+sh_before120 <- data120["SH_Mean"] %>% slice(seq(1, nrow(data120), by = 2)) %>% pull("SH_Mean")
+sh_after120 <- data120["SH_Mean"] %>% slice(seq(2, nrow(data120), by = 2)) %>% pull("SH_Mean")
+sh_diff120 <- sh_after120 - sh_before120
+
+# normality test (정규성 검정)
+sh120_sw <- shapiro.test(sh_diff120) 
+
+# paired t-test (대응표본 t검정)
+if (sh120_sw$p.value > 0.05) {
+    sh120_test <- t.test(sh_before120, sh_after120, paired = TRUE)
+} else {
+    sh120_test <- wilcox.test(sh_before120, sh_after120, paired = TRUE)
+}
+
+if (sh120_test$p.value > 0.05) {
+    result_sh120 <- "유의미한 변화 없음"
+} else {
+    result_sh120 <- "유의미한 변화 있음"
+}
+
+# --- Tem ---
+tem_before120 <- data120["Tem_Mean"] %>% slice(seq(1, nrow(data120), by = 2)) %>% pull("Tem_Mean")
+tem_after120 <- data120["Tem_Mean"] %>% slice(seq(2, nrow(data120), by = 2)) %>% pull("Tem_Mean")
+tem_diff120 <- tem_after120 - tem_before120
+
+# normality test (정규성 검정)
+tem120_sw <- shapiro.test(tem_diff120) 
+
+# paired t-test (대응표본 t검정)
+if (tem120_sw$p.value > 0.05) {
+    tem120_test <- t.test(tem_before120, tem_after120, paired = TRUE)
+} else {
+    tem120_test <- wilcox.test(tem_before120, tem_after120, paired = TRUE)
+}
+
+if (tem120_test$p.value > 0.05) {
+    result_tem120 <- "유의미한 변화 없음"
+} else {
+    result_tem120 <- "유의미한 변화 있음"
+}
+
+print(glue(
+    "{time} 전후로 경피수분손실도(TEWL)에 {result_tewl120}
+    {time} 전후로 피부수화도(SH)에 {result_sh120}
+    {time} 전후로 체표면온도(Tem)에 {result_tem120}"
+    ))
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+## 4분 전후 비교
+
+```{r}
+time <- "4분"
+data240 <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+
+# --- TEWL ---
+tewl_before240 <- data240["TEWL_Mean"] %>% slice(seq(1, nrow(data240), by = 2)) %>% pull("TEWL_Mean")
+tewl_after240 <- data240["TEWL_Mean"] %>% slice(seq(2, nrow(data240), by = 2)) %>% pull("TEWL_Mean")
+tewl_diff240 <- tewl_after240 - tewl_before240
+
+# normality test (정규성 검정)
+tewl240_sw <- shapiro.test(tewl_diff240)
+
+# paired t-test (대응표본 t검정)
+if (tewl240_sw$p.value > 0.05) {
+    tewl240_test <- t.test(tewl_before240, tewl_after240, paired = TRUE)
+} else {
+    tewl240_test <- wilcox.test(tewl_before240, tewl_after240, paired = TRUE)
+}
+
+if (tewl240_test$p.value > 0.05) {
+    result_tewl240 <- "유의미한 변화 없음"
+} else {
+    result_tewl240 <- "유의미한 변화 있음"
+}
+
+# --- SH ---
+sh_before240 <- data240["SH_Mean"] %>% slice(seq(1, nrow(data240), by = 2)) %>% pull("SH_Mean")
+sh_after240 <- data240["SH_Mean"] %>% slice(seq(2, nrow(data240), by = 2)) %>% pull("SH_Mean")
+sh_diff240 <- sh_after240 - sh_before240
+
+# normality test (정규성 검정)
+sh240_sw <- shapiro.test(sh_diff240) 
+
+# paired t-test (대응표본 t검정)
+if (sh240_sw$p.value > 0.05) {
+    sh240_test <- t.test(sh_before240, sh_after240, paired = TRUE)
+} else {
+    sh240_test <- wilcox.test(sh_before240, sh_after240, paired = TRUE)
+}
+
+if (sh240_test$p.value > 0.05) {
+    result_sh240 <- "유의미한 변화 없음"
+} else {
+    result_sh240 <- "유의미한 변화 있음"
+}
+
+# --- Tem ---
+tem_before240 <- data240["Tem_Mean"] %>% slice(seq(1, nrow(data240), by = 2)) %>% pull("Tem_Mean")
+tem_after240 <- data240["Tem_Mean"] %>% slice(seq(2, nrow(data240), by = 2)) %>% pull("Tem_Mean")
+tem_diff240 <- tem_after240 - tem_before240
+
+# normality test (정규성 검정)
+tem240_sw <- shapiro.test(tem_diff240) 
+
+# paired t-test (대응표본 t검정)
+if (tem240_sw$p.value > 0.05) {
+    tem240_test <- t.test(tem_before240, tem_after240, paired = TRUE)
+} else {
+    tem240_test <- wilcox.test(tem_before240, tem_after240, paired = TRUE)
+}
+
+if (tem240_test$p.value > 0.05) {
+    result_tem240 <- "유의미한 변화 없음"
+} else {
+    result_tem240 <- "유의미한 변화 있음"
+}
+
+print(glue(
+    "{time} 전후로 경피수분손실도(TEWL)에 {result_tewl240}
+    {time} 전후로 피부수화도(SH)에 {result_sh240}
+    {time} 전후로 체표면온도(Tem)에 {result_tem240}"
+    ))
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+## 시간에 따른 피부 장벽 기능 지표 변화
+
+```{r}
+data <- data %>% mutate(Time = factor(Time, levels = c("30초 Before", "30초 After", "1분 Before", "1분 After", "2분 Before", "2분 After", "4분 Before", "4분 After")))
+
+tewl_plot <- data %>% 
+  select(Time, TEWL_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(TEWL_Mean = round(mean(TEWL_Mean), 2)) %>% 
+  ggplot(mapping = aes(x = Time, y = TEWL_Mean)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = TEWL_Mean), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 20))
+
+sh_plot <- data %>% 
+  select(Time, SH_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(SH_Mean = round(mean(SH_Mean), 2)) %>% 
+  ggplot(mapping = aes(x = Time, y = SH_Mean)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = SH_Mean), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 20))
+
+tem_plot <- data %>% 
+  select(Time, Tem_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(Tem_Mean = round(mean(Tem_Mean), 2)) %>% 
+  ggplot(mapping = aes(x = Time, y = Tem_Mean)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Tem_Mean), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 40))
+
+ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
+```
+
+```{r}
+# sh_table <- tibble(SH_diff = c(sh_diff30, sh_diff60, sh_diff120, sh_diff240), Time = factor(rep(c("30", "60", "120", "240"), each = 20)))
+
+# levene.test(sh_table$SH_diff, sh_table$Time)
+
+# sh_anova <- aov(formula = SH_diff ~ Time, sh_table)
+# summary(sh_anova)
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+# 알레르기 있는 샛별이와 송이를 포함하지 않은 결과 (n = 18)
+
+```{r}
+data <- data %>% filter(Name %!in% c("샛별이", "송이"))
+```
+
+## 30초 전후 비교
+
+```{r}
+time <- "30초"
+data30 <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+
+# --- TEWL ---
+tewl_before30 <- data30["TEWL_Mean"] %>% slice(seq(1, nrow(data30), by = 2)) %>% pull("TEWL_Mean")
+tewl_after30 <- data30["TEWL_Mean"] %>% slice(seq(2, nrow(data30), by = 2)) %>% pull("TEWL_Mean")
+tewl_diff30 <- tewl_after30 - tewl_before30
+
+# normality test (정규성 검정)
+tewl30_sw <- shapiro.test(tewl_diff30)
+
+# paired t-test (대응표본 t검정)
+if (tewl30_sw$p.value > 0.05) {
+    tewl30_test <- t.test(tewl_before30, tewl_after30, paired = TRUE)
+} else {
+    tewl30_test <- wilcox.test(tewl_before30, tewl_after30, paired = TRUE)
+}
+
+if (tewl30_test$p.value > 0.05) {
+    result_tewl30 <- "유의미한 변화 없음"
+} else {
+    result_tewl30 <- "유의미한 변화 있음"
+}
+
+# --- SH ---
+sh_before30 <- data30["SH_Mean"] %>% slice(seq(1, nrow(data30), by = 2)) %>% pull("SH_Mean")
+sh_after30 <- data30["SH_Mean"] %>% slice(seq(2, nrow(data30), by = 2)) %>% pull("SH_Mean")
+sh_diff30 <- sh_after30 - sh_before30
+
+# normality test (정규성 검정)
+sh30_sw <- shapiro.test(sh_diff30) 
+
+# paired t-test (대응표본 t검정)
+if (sh30_sw$p.value > 0.05) {
+    sh30_test <- t.test(sh_before30, sh_after30, paired = TRUE)
+} else {
+    sh30_test <- wilcox.test(sh_before30, sh_after30, paired = TRUE)
+}
+
+if (sh30_test$p.value > 0.05) {
+    result_sh30 <- "유의미한 변화 없음"
+} else {
+    result_sh30 <- "유의미한 변화 있음"
+}
+
+# --- Tem ---
+tem_before30 <- data30["Tem_Mean"] %>% slice(seq(1, nrow(data30), by = 2)) %>% pull("Tem_Mean")
+tem_after30 <- data30["Tem_Mean"] %>% slice(seq(2, nrow(data30), by = 2)) %>% pull("Tem_Mean")
+tem_diff30 <- tem_after30 - tem_before30
+
+# normality test (정규성 검정)
+tem30_sw <- shapiro.test(tem_diff30) 
+
+# paired t-test (대응표본 t검정)
+if (tem30_sw$p.value > 0.05) {
+    tem30_test <- t.test(tem_before30, tem_after30, paired = TRUE)
+} else {
+    tem30_test <- wilcox.test(tem_before30, tem_after30, paired = TRUE)
+}
+
+if (tem30_test$p.value > 0.05) {
+    result_tem30 <- "유의미한 변화 없음"
+} else {
+    result_tem30 <- "유의미한 변화 있음"
+}
+
+print(glue(
+    "{time} 전후로 경피수분손실도(TEWL)에 {result_tewl30}
+    {time} 전후로 피부수화도(SH)에 {result_sh30}
+    {time} 전후로 체표면온도(Tem)에 {result_tem30}"
+    ))
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+## 1분 전후 비교
+
+```{r}
+time <- "1분"
+data60 <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+
+# --- TEWL ---
+tewl_before60 <- data60["TEWL_Mean"] %>% slice(seq(1, nrow(data60), by = 2)) %>% pull("TEWL_Mean")
+tewl_after60 <- data60["TEWL_Mean"] %>% slice(seq(2, nrow(data60), by = 2)) %>% pull("TEWL_Mean")
+tewl_diff60 <- tewl_after60 - tewl_before60
+
+# normality test (정규성 검정)
+tewl60_sw <- shapiro.test(tewl_diff60)
+
+# paired t-test (대응표본 t검정)
+if (tewl60_sw$p.value > 0.05) {
+    tewl60_test <- t.test(tewl_before60, tewl_after60, paired = TRUE)
+} else {
+    tewl60_test <- wilcox.test(tewl_before60, tewl_after60, paired = TRUE)
+}
+
+if (tewl60_test$p.value > 0.05) {
+    result_tewl60 <- "유의미한 변화 없음"
+} else {
+    result_tewl60 <- "유의미한 변화 있음"
+}
+
+# --- SH ---
+sh_before60 <- data60["SH_Mean"] %>% slice(seq(1, nrow(data60), by = 2)) %>% pull("SH_Mean")
+sh_after60 <- data60["SH_Mean"] %>% slice(seq(2, nrow(data60), by = 2)) %>% pull("SH_Mean")
+sh_diff60 <- sh_after60 - sh_before60
+
+# normality test (정규성 검정)
+sh60_sw <- shapiro.test(sh_diff60) 
+
+# paired t-test (대응표본 t검정)
+if (sh60_sw$p.value > 0.05) {
+    sh60_test <- t.test(sh_before60, sh_after60, paired = TRUE)
+} else {
+    sh60_test <- wilcox.test(sh_before60, sh_after60, paired = TRUE)
+}
+
+if (sh60_test$p.value > 0.05) {
+    result_sh60 <- "유의미한 변화 없음"
+} else {
+    result_sh60 <- "유의미한 변화 있음"
+}
+
+# --- Tem ---
+tem_before60 <- data60["Tem_Mean"] %>% slice(seq(1, nrow(data60), by = 2)) %>% pull("Tem_Mean")
+tem_after60 <- data60["Tem_Mean"] %>% slice(seq(2, nrow(data60), by = 2)) %>% pull("Tem_Mean")
+tem_diff60 <- tem_after60 - tem_before60
+
+# normality test (정규성 검정)
+tem60_sw <- shapiro.test(tem_diff60) 
+
+# paired t-test (대응표본 t검정)
+if (tem60_sw$p.value > 0.05) {
+    tem60_test <- t.test(tem_before60, tem_after60, paired = TRUE)
+} else {
+    tem60_test <- wilcox.test(tem_before60, tem_after60, paired = TRUE)
+}
+
+if (tem60_test$p.value > 0.05) {
+    result_tem60 <- "유의미한 변화 없음"
+} else {
+    result_tem60 <- "유의미한 변화 있음"
+}
+
+print(glue(
+    "{time} 전후로 경피수분손실도(TEWL)에 {result_tewl60}
+    {time} 전후로 피부수화도(SH)에 {result_sh60}
+    {time} 전후로 체표면온도(Tem)에 {result_tem60}"
+    ))
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+## 2분 전후 비교
+
+```{r}
+time <- "2분"
+data120 <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+
+# --- TEWL ---
+tewl_before120 <- data120["TEWL_Mean"] %>% slice(seq(1, nrow(data120), by = 2)) %>% pull("TEWL_Mean")
+tewl_after120 <- data120["TEWL_Mean"] %>% slice(seq(2, nrow(data120), by = 2)) %>% pull("TEWL_Mean")
+tewl_diff120 <- tewl_after120 - tewl_before120
+
+# normality test (정규성 검정)
+tewl120_sw <- shapiro.test(tewl_diff120)
+
+# paired t-test (대응표본 t검정)
+if (tewl120_sw$p.value > 0.05) {
+    tewl120_test <- t.test(tewl_before120, tewl_after120, paired = TRUE)
+} else {
+    tewl120_test <- wilcox.test(tewl_before120, tewl_after120, paired = TRUE)
+}
+
+if (tewl120_test$p.value > 0.05) {
+    result_tewl120 <- "유의미한 변화 없음"
+} else {
+    result_tewl120 <- "유의미한 변화 있음"
+}
+
+# --- SH ---
+sh_before120 <- data120["SH_Mean"] %>% slice(seq(1, nrow(data120), by = 2)) %>% pull("SH_Mean")
+sh_after120 <- data120["SH_Mean"] %>% slice(seq(2, nrow(data120), by = 2)) %>% pull("SH_Mean")
+sh_diff120 <- sh_after120 - sh_before120
+
+# normality test (정규성 검정)
+sh120_sw <- shapiro.test(sh_diff120) 
+
+# paired t-test (대응표본 t검정)
+if (sh120_sw$p.value > 0.05) {
+    sh120_test <- t.test(sh_before120, sh_after120, paired = TRUE)
+} else {
+    sh120_test <- wilcox.test(sh_before120, sh_after120, paired = TRUE)
+}
+
+if (sh120_test$p.value > 0.05) {
+    result_sh120 <- "유의미한 변화 없음"
+} else {
+    result_sh120 <- "유의미한 변화 있음"
+}
+
+# --- Tem ---
+tem_before120 <- data120["Tem_Mean"] %>% slice(seq(1, nrow(data120), by = 2)) %>% pull("Tem_Mean")
+tem_after120 <- data120["Tem_Mean"] %>% slice(seq(2, nrow(data120), by = 2)) %>% pull("Tem_Mean")
+tem_diff120 <- tem_after120 - tem_before120
+
+# normality test (정규성 검정)
+tem120_sw <- shapiro.test(tem_diff120) 
+
+# paired t-test (대응표본 t검정)
+if (tem120_sw$p.value > 0.05) {
+    tem120_test <- t.test(tem_before120, tem_after120, paired = TRUE)
+} else {
+    tem120_test <- wilcox.test(tem_before120, tem_after120, paired = TRUE)
+}
+
+if (tem120_test$p.value > 0.05) {
+    result_tem120 <- "유의미한 변화 없음"
+} else {
+    result_tem120 <- "유의미한 변화 있음"
+}
+
+print(glue(
+    "{time} 전후로 경피수분손실도(TEWL)에 {result_tewl120}
+    {time} 전후로 피부수화도(SH)에 {result_sh120}
+    {time} 전후로 체표면온도(Tem)에 {result_tem120}"
+    ))
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+## 4분 전후 비교
+
+```{r}
+time <- "4분"
+data240 <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+
+# --- TEWL ---
+tewl_before240 <- data240["TEWL_Mean"] %>% slice(seq(1, nrow(data240), by = 2)) %>% pull("TEWL_Mean")
+tewl_after240 <- data240["TEWL_Mean"] %>% slice(seq(2, nrow(data240), by = 2)) %>% pull("TEWL_Mean")
+tewl_diff240 <- tewl_after240 - tewl_before240
+
+# normality test (정규성 검정)
+tewl240_sw <- shapiro.test(tewl_diff240)
+
+# paired t-test (대응표본 t검정)
+if (tewl240_sw$p.value > 0.05) {
+    tewl240_test <- t.test(tewl_before240, tewl_after240, paired = TRUE)
+} else {
+    tewl240_test <- wilcox.test(tewl_before240, tewl_after240, paired = TRUE)
+}
+
+if (tewl240_test$p.value > 0.05) {
+    result_tewl240 <- "유의미한 변화 없음"
+} else {
+    result_tewl240 <- "유의미한 변화 있음"
+}
+
+# --- SH ---
+sh_before240 <- data240["SH_Mean"] %>% slice(seq(1, nrow(data240), by = 2)) %>% pull("SH_Mean")
+sh_after240 <- data240["SH_Mean"] %>% slice(seq(2, nrow(data240), by = 2)) %>% pull("SH_Mean")
+sh_diff240 <- sh_after240 - sh_before240
+
+# normality test (정규성 검정)
+sh240_sw <- shapiro.test(sh_diff240) 
+
+# paired t-test (대응표본 t검정)
+if (sh240_sw$p.value > 0.05) {
+    sh240_test <- t.test(sh_before240, sh_after240, paired = TRUE)
+} else {
+    sh240_test <- wilcox.test(sh_before240, sh_after240, paired = TRUE)
+}
+
+if (sh240_test$p.value > 0.05) {
+    result_sh240 <- "유의미한 변화 없음"
+} else {
+    result_sh240 <- "유의미한 변화 있음"
+}
+
+# --- Tem ---
+tem_before240 <- data240["Tem_Mean"] %>% slice(seq(1, nrow(data240), by = 2)) %>% pull("Tem_Mean")
+tem_after240 <- data240["Tem_Mean"] %>% slice(seq(2, nrow(data240), by = 2)) %>% pull("Tem_Mean")
+tem_diff240 <- tem_after240 - tem_before240
+
+# normality test (정규성 검정)
+tem240_sw <- shapiro.test(tem_diff240) 
+
+# paired t-test (대응표본 t검정)
+if (tem240_sw$p.value > 0.05) {
+    tem240_test <- t.test(tem_before240, tem_after240, paired = TRUE)
+} else {
+    tem240_test <- wilcox.test(tem_before240, tem_after240, paired = TRUE)
+}
+
+if (tem240_test$p.value > 0.05) {
+    result_tem240 <- "유의미한 변화 없음"
+} else {
+    result_tem240 <- "유의미한 변화 있음"
+}
+
+print(glue(
+    "{time} 전후로 경피수분손실도(TEWL)에 {result_tewl240}
+    {time} 전후로 피부수화도(SH)에 {result_sh240}
+    {time} 전후로 체표면온도(Tem)에 {result_tem240}"
+    ))
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+## 시간에 따른 피부 장벽 기능 지표 변화
+
+```{r}
+data <- data %>% mutate(Time = factor(Time, levels = c("30초 Before", "30초 After", "1분 Before", "1분 After", "2분 Before", "2분 After", "4분 Before", "4분 After")))
+
+tewl_plot <- data %>% 
+  select(Time, TEWL_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(TEWL_Mean = round(mean(TEWL_Mean), 2)) %>% 
+  ggplot(mapping = aes(x = Time, y = TEWL_Mean)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = TEWL_Mean), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 20))
+
+sh_plot <- data %>% 
+  select(Time, SH_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(SH_Mean = round(mean(SH_Mean), 2)) %>% 
+  ggplot(mapping = aes(x = Time, y = SH_Mean)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = SH_Mean), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 20))
+
+tem_plot <- data %>% 
+  select(Time, Tem_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(Tem_Mean = round(mean(Tem_Mean), 2)) %>% 
+  ggplot(mapping = aes(x = Time, y = Tem_Mean)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Tem_Mean), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 40))
+
+ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
+```
