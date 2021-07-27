@@ -1,4 +1,6 @@
-print_results <- function(data, time, tewl = "two.sided", sh = "two.sided", tem = "two.sided") {
+`%!in%` <- Negate(`%in%`)
+
+print_paired_results <- function(data, time, tewl = "two.sided", sh = "two.sided", tem = "two.sided") {
     data <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
     
     # --- TEWL ---
@@ -69,4 +71,46 @@ print_results <- function(data, time, tewl = "two.sided", sh = "two.sided", tem 
     {time} 전후로 피부수화도(SH)에 {result_sh}
     {time} 전후로 체표면온도(Tem)에 {result_tem}"
     ))
+}
+
+print_multiple_results <- function(data, variable, times) {
+    test_data <- list()
+    Difference <- c()
+    Time <- rep(times, each = 20)
+    Normality <- list()
+    
+    for (time in times) {
+        data_by_time <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+        y_before <- data_by_time[glue("{variable}_Mean")] %>% slice(seq(1, nrow(data_by_time), by = 2)) %>% pull(glue("{variable}_Mean"))
+        y_after <- data_by_time[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data_by_time), by = 2)) %>% pull(glue("{variable}_Mean"))
+        y_diff <- y_after - y_before
+        Difference <- append(Difference, y_diff)
+        Normality[[time]] <- shapiro.test(Difference)
+    }
+    
+    test_data[["Difference"]] <- Difference    
+    test_data[["Time"]] <- Time
+    
+    test_data <- test_data %>% as_tibble()
+    equivar_test <- levene.test(test_data$Difference, test_data$Time, location = "mean")
+    
+    if (all(map_dbl(Normality, "p.value") > 0.05)) {
+        if (equivar_test$p.value > 0.05) {
+            multiple_test <- oneway.test(formula = Difference ~ Time, data = test_data, var.equal = TRUE)
+        } else {
+            multiple_test <- oneway.test(formula = Difference ~ Time, data = test_data, var.equal = FALSE)
+        }
+    } else {
+        multiple_test <- kruskal.test(Difference ~ Time, test_data)
+    }
+    
+    time <- paste(times, collapse = ", ")
+    
+    if (multiple_test$p.value > 0.05) {
+        result <- glue("{time}의 플라즈마 조사 전후 {variable} 차이값에 유의미한 차이가 없음")
+    } else {
+        result <- glue("{time}의 플라즈마 조사 전후 {variable} 차이값에 유의미한 차이가 있음")
+    }
+    
+    print(result)
 }
