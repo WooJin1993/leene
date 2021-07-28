@@ -164,13 +164,25 @@ tem_plot <- data %>%
 ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
 ```
 
+### 시간별로 경피수분손실도(TEWL)의 차이값이 유의한지
+
 ```{r}
-# sh_table <- tibble(SH_diff = c(sh_diff30, sh_diff60, sh_diff120, sh_diff240), Time = factor(rep(c("30", "60", "120", "240"), each = 20)))
+print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
+print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
+```
 
-# levene.test(sh_table$SH_diff, sh_table$Time)
+### 시간별로 피부수화도(SH)의 차이값이 유의한지
 
-# sh_anova <- aov(formula = SH_diff ~ Time, sh_table)
-# summary(sh_anova)
+```{r}
+print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
+print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분"))
+```
+
+### 시간별로 체표면온도(Tem)의 차이값이 유의한지
+
+```{r}
+print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
+print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
 ```
 
 <hr>
@@ -288,4 +300,25 @@ tem_plot <- data %>%
   coord_cartesian(ylim = c(0, 40))
 
 ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
+```
+
+### 시간별로 경피수분손실도(TEWL)의 차이값이 유의한지
+
+```{r}
+print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
+print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
+```
+
+### 시간별로 피부수화도(SH)의 차이값이 유의한지
+
+```{r}
+print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
+print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분"))
+```
+
+### 시간별로 체표면온도(Tem)의 차이값이 유의한지
+
+```{r}
+print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
+print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
 ```

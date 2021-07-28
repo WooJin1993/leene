@@ -76,7 +76,7 @@ print_paired_results <- function(data, time, tewl = "two.sided", sh = "two.sided
 print_multiple_results <- function(data, variable, times) {
     test_data <- list()
     Difference <- c()
-    Time <- rep(times, each = 20)
+    Time <- rep(times, each = nrow(data) / 8)
     Normality <- list()
     
     for (time in times) {
