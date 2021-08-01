@@ -164,25 +164,46 @@ tem_plot <- data %>%
 ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
 ```
 
-### 시간별로 경피수분손실도(TEWL)의 차이값이 유의한지
+### 플라즈마 조사 전후 경피수분손실도(TEWL)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
 print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
 ```
 
-### 시간별로 피부수화도(SH)의 차이값이 유의한지
+### 플라즈마 조사 후 경피수분손실도(TEWL)의 값이 시간에 따라 차이가 있는지
+
+```{r}
+print_after_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
+print_after_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
+```
+
+### 플라즈마 조사 전후 피부수화도(SH)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
 print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분"))
 ```
 
-### 시간별로 체표면온도(Tem)의 차이값이 유의한지
+### 플라즈마 조사 후 피부수화도(SH)의 값이 시간에 따라 차이가 있는지
+
+```{r}
+print_after_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
+print_after_results(data, variable = "SH", times = c("30초", "1분", "2분"))
+```
+
+### 플라즈마 조사 전후 체표면온도(Tem)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
 print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
+```
+
+### 플라즈마 조사 후 체표면온도(Tem)의 값이 시간에 따라 차이가 있는지
+
+```{r}
+print_after_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
+print_after_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
 ```
 
 <hr>
@@ -270,8 +291,6 @@ print_paired_results(data, time = "4분", tewl = "greater", sh = "less", tem = "
 ## 시간에 따른 피부 장벽 기능 지표 변화
 
 ```{r}
-data <- data %>% mutate(Time = factor(Time, levels = c("30초 Before", "30초 After", "1분 Before", "1분 After", "2분 Before", "2분 After", "4분 Before", "4분 After")))
-
 tewl_plot <- data %>% 
   select(Time, TEWL_Mean) %>% 
   group_by(Time) %>% 
@@ -302,23 +321,44 @@ tem_plot <- data %>%
 ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
 ```
 
-### 시간별로 경피수분손실도(TEWL)의 차이값이 유의한지
+### 플라즈마 조사 전후 경피수분손실도(TEWL)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
 print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
 ```
 
-### 시간별로 피부수화도(SH)의 차이값이 유의한지
+### 플라즈마 조사 후 경피수분손실도(TEWL)의 값이 시간에 따라 차이가 있는지
+
+```{r}
+print_after_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
+print_after_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
+```
+
+### 플라즈마 조사 전후 피부수화도(SH)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
 print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분"))
 ```
 
-### 시간별로 체표면온도(Tem)의 차이값이 유의한지
+### 플라즈마 조사 후 피부수화도(SH)의 값이 시간에 따라 차이가 있는지
+
+```{r}
+print_after_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
+print_after_results(data, variable = "SH", times = c("30초", "1분", "2분"))
+```
+
+### 플라즈마 조사 전후 체표면온도(Tem)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
 print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
+```
+
+### 플라즈마 조사 후 체표면온도(Tem)의 값이 시간에 따라 차이가 있는지
+
+```{r}
+print_after_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
+print_after_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
 ```

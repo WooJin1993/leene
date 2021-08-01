@@ -13,9 +13,9 @@ print_paired_results <- function(data, time, tewl = "two.sided", sh = "two.sided
     
     # paired t-test (대응표본 t검정)
     if (tewl_sw$p.value > 0.05) {
-        tewl_test <- t.test(tewl_before, tewl_after, alternative = tewl, paired = TRUE)
+        tewl_test <- t.test(tewl_after, tewl_before, alternative = tewl, paired = TRUE)
     } else {
-        tewl_test <- wilcox.test(tewl_before, tewl_after, alternative = tewl, paired = TRUE)
+        tewl_test <- wilcox.test(tewl_after, tewl_before, alternative = tewl, paired = TRUE)
     }
     
     if (tewl_test$p.value > 0.05) {
@@ -34,9 +34,9 @@ print_paired_results <- function(data, time, tewl = "two.sided", sh = "two.sided
     
     # paired t-test (대응표본 t검정)
     if (sh_sw$p.value > 0.05) {
-        sh_test <- t.test(sh_before, sh_after, alternative = sh, paired = TRUE)
+        sh_test <- t.test(sh_after, sh_before, alternative = sh, paired = TRUE)
     } else {
-        sh_test <- wilcox.test(sh_before, sh_after, alternative = sh, paired = TRUE)
+        sh_test <- wilcox.test(sh_after, sh_before, alternative = sh, paired = TRUE)
     }
     
     if (sh_test$p.value > 0.05) {
@@ -55,9 +55,9 @@ print_paired_results <- function(data, time, tewl = "two.sided", sh = "two.sided
     
     # paired t-test (대응표본 t검정)
     if (tem_sw$p.value > 0.05) {
-        tem_test <- t.test(tem_before, tem_after, alternative = tem, paired = TRUE)
+        tem_test <- t.test(tem_after, tem_before, alternative = tem, paired = TRUE)
     } else {
-        tem_test <- wilcox.test(tem_before, tem_after, alternative = tem, paired = TRUE)
+        tem_test <- wilcox.test(tem_after, tem_before, alternative = tem, paired = TRUE)
     }
     
     if (tem_test$p.value > 0.05) {
@@ -90,8 +90,8 @@ print_multiple_results <- function(data, variable, times) {
     
     test_data[["Difference"]] <- Difference    
     test_data[["Time"]] <- Time
-    
     test_data <- test_data %>% as_tibble()
+    
     equivar_test <- levene.test(test_data$Difference, test_data$Time, location = "mean")
     
     if (all(map_dbl(Normality, "p.value") > 0.05)) {
@@ -110,6 +110,46 @@ print_multiple_results <- function(data, variable, times) {
         result <- glue("{time}의 플라즈마 조사 전후 {variable} 차이값에 유의미한 차이가 없음")
     } else {
         result <- glue("{time}의 플라즈마 조사 전후 {variable} 차이값에 유의미한 차이가 있음")
+    }
+    
+    print(result)
+}
+
+print_after_results <- function(data, variable, times) {
+    test_data <- list()
+    After <- c()
+    Time <- rep(times, each = nrow(data) / 8)
+    Normality <- list()
+    
+    for (time in times) {
+        data_by_time <- data %>% filter(Time %in% glue("{time} After"))
+        y_after <- data_by_time[glue("{variable}_Mean")] %>% pull(glue("{variable}_Mean"))
+        After <- append(After, y_after)
+        Normality[[time]] <- shapiro.test(After)
+    }
+    
+    test_data[["After"]] <- After    
+    test_data[["Time"]] <- Time
+    test_data <- test_data %>% as_tibble()
+    
+    equivar_test <- levene.test(test_data$After, test_data$Time, location = "mean")
+    
+    if (all(map_dbl(Normality, "p.value") > 0.05)) {
+        if (equivar_test$p.value > 0.05) {
+            multiple_test <- oneway.test(formula = After ~ Time, data = test_data, var.equal = TRUE)
+        } else {
+            multiple_test <- oneway.test(formula = After ~ Time, data = test_data, var.equal = FALSE)
+        }
+    } else {
+        multiple_test <- kruskal.test(After ~ Time, test_data)
+    }
+    
+    time <- paste(times, collapse = ", ")
+    
+    if (multiple_test$p.value > 0.05) {
+        result <- glue("{time}의 플라즈마 조사 후 {variable} 값에 유의미한 차이가 없음")
+    } else {
+        result <- glue("{time}의 플라즈마 조사 후 {variable} 값에 유의미한 차이가 있음")
     }
     
     print(result)
