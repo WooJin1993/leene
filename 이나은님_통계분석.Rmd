@@ -35,10 +35,12 @@ library(glue)
 library(lawstat)
 library(purrr)
 library(readr)
+library(wPerm)
 
 options(scipen = 999) # turn-off scientific notation like 1e+48
 options(tibble.width = Inf)
 source("./functions.R")
+# source("./functions_global.R")
 ```
 
 <hr>
@@ -59,14 +61,6 @@ data <- read_csv("./data/실험수치.csv")
 
 ## 30초 전후 비교
 
-### 양측 검정
-
-```{r}
-print_paired_results(data, time = "30초")
-```
-
-### 단측 검정
-
 ```{r}
 print_paired_results(data, time = "30초", tewl = "greater", sh = "less", tem = "greater")
 ```
@@ -76,14 +70,6 @@ print_paired_results(data, time = "30초", tewl = "greater", sh = "less", tem = 
 <div style="margin-bottom:60px;"></div>
 
 ## 1분 전후 비교
-
-### 양측 검정
-
-```{r}
-print_paired_results(data, time = "1분")
-```
-
-### 단측 검정
 
 ```{r}
 print_paired_results(data, time = "1분", tewl = "greater", sh = "less", tem = "greater")
@@ -95,14 +81,6 @@ print_paired_results(data, time = "1분", tewl = "greater", sh = "less", tem = "
 
 ## 2분 전후 비교
 
-### 양측 검정
-
-```{r}
-print_paired_results(data, time = "2분")
-```
-
-### 단측 검정
-
 ```{r}
 print_paired_results(data, time = "2분", tewl = "greater", sh = "less", tem = "greater")
 ```
@@ -112,14 +90,6 @@ print_paired_results(data, time = "2분", tewl = "greater", sh = "less", tem = "
 <div style="margin-bottom:60px;"></div>
 
 ## 4분 전후 비교
-
-### 양측 검정
-
-```{r}
-print_paired_results(data, time = "4분")
-```
-
-### 단측 검정
 
 ```{r}
 print_paired_results(data, time = "4분", tewl = "greater", sh = "less", tem = "greater")
@@ -164,45 +134,75 @@ tem_plot <- data %>%
 ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
 ```
 
+<div style="margin-bottom:60px;"></div>
+
 ### 플라즈마 조사 전후 경피수분손실도(TEWL)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 후 경피수분손실도(TEWL)의 값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_after_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_after_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 전후 피부수화도(SH)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 후 피부수화도(SH)의 값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_after_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_after_results(data, variable = "SH", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 전후 체표면온도(Tem)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 후 체표면온도(Tem)의 값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_after_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_after_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
 ```
 
@@ -218,14 +218,6 @@ data <- data %>% filter(Name %!in% c("샛별이", "송이"))
 
 ## 30초 전후 비교
 
-### 양측 검정
-
-```{r}
-print_paired_results(data, time = "30초")
-```
-
-### 단측 검정
-
 ```{r}
 print_paired_results(data, time = "30초", tewl = "greater", sh = "less", tem = "greater")
 ```
@@ -235,14 +227,6 @@ print_paired_results(data, time = "30초", tewl = "greater", sh = "less", tem = 
 <div style="margin-bottom:60px;"></div>
 
 ## 1분 전후 비교
-
-### 양측 검정
-
-```{r}
-print_paired_results(data, time = "1분")
-```
-
-### 단측 검정
 
 ```{r}
 print_paired_results(data, time = "1분", tewl = "greater", sh = "less", tem = "greater")
@@ -254,14 +238,6 @@ print_paired_results(data, time = "1분", tewl = "greater", sh = "less", tem = "
 
 ## 2분 전후 비교
 
-### 양측 검정
-
-```{r}
-print_paired_results(data, time = "2분")
-```
-
-### 단측 검정
-
 ```{r}
 print_paired_results(data, time = "2분", tewl = "greater", sh = "less", tem = "greater")
 ```
@@ -271,14 +247,6 @@ print_paired_results(data, time = "2분", tewl = "greater", sh = "less", tem = "
 <div style="margin-bottom:60px;"></div>
 
 ## 4분 전후 비교
-
-### 양측 검정
-
-```{r}
-print_paired_results(data, time = "4분")
-```
-
-### 단측 검정
 
 ```{r}
 print_paired_results(data, time = "4분", tewl = "greater", sh = "less", tem = "greater")
@@ -321,44 +289,74 @@ tem_plot <- data %>%
 ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
 ```
 
+<div style="margin-bottom:60px;"></div>
+
 ### 플라즈마 조사 전후 경피수분손실도(TEWL)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_multiple_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 후 경피수분손실도(TEWL)의 값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_after_results(data, variable = "TEWL", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_after_results(data, variable = "TEWL", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 전후 피부수화도(SH)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_multiple_results(data, variable = "SH", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 후 피부수화도(SH)의 값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_after_results(data, variable = "SH", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_after_results(data, variable = "SH", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 전후 체표면온도(Tem)의 차잇값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_multiple_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
 ```
+
+<div style="margin-bottom:60px;"></div>
 
 ### 플라즈마 조사 후 체표면온도(Tem)의 값이 시간에 따라 차이가 있는지
 
 ```{r}
 print_after_results(data, variable = "Tem", times = c("30초", "1분", "2분", "4분"))
+```
+
+```{r}
 print_after_results(data, variable = "Tem", times = c("30초", "1분", "2분"))
 ```
