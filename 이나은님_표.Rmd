@@ -1,0 +1,214 @@
+---
+title: "분석 결과 (표)"
+author: "안우진"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    fig_width: 14
+    fig_height: 10
+    fig.align : 'center'
+    toc: yes
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, comment = "")
+```
+
+<style type="text/css">
+.main-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+# 패키지 로드 및 옵션 설정
+
+```{r}
+rm(list = ls())
+
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(glue)
+library(kableExtra)
+library(lawstat)
+library(purrr)
+library(readr)
+library(wPerm)
+
+options(scipen = 999) # turn-off scientific notation like 1e+48
+options(tibble.width = Inf)
+source("./functions_table.R")
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+```{r}
+data <- read_csv("./data/실험수치.csv")
+variables <- c("알레르기", "시간", "지표", "정규성 p-value", "정규성 결과", "검정 방법", "검정 p-value", "검정 결과", "순열 검정 p-value", "순열 검정 결과", "요약")
+df <- variables %>% map_dfc(setNames, object = list(character()))
+df2 <- variables %>% map_dfc(setNames, object = list(character()))
+df3 <- variables %>% map_dfc(setNames, object = list(character()))
+
+# 알레르기 있는 샛별이와 송이를 포함한 결과 (n = 20)
+
+for (time in c("30초", "1분", "2분", "4분")) {
+  df <- bind_rows(df, get_paired_table(data, time = time))
+}
+
+for (times in list(c("30초", "1분", "2분", "4분"), c("30초", "1분", "2분"))){
+  for (variable in c("TEWL", "SH", "Tem")) {
+    df2 <- bind_rows(df2, get_multiple_table(data, variable = variable, times = times))
+  }
+}
+
+for (times in list(c("30초", "1분", "2분", "4분"), c("30초", "1분", "2분"))){
+  for (variable in c("TEWL", "SH", "Tem")) {
+    df3 <- bind_rows(df3, get_after_table(data, variable = variable, times = times))
+  }
+}
+    
+# 알레르기 있는 샛별이와 송이를 포함하지 않은 결과 (n = 18)
+    
+data <- data %>% filter(Name %!in% c("샛별이", "송이"))
+
+for (time in c("30초", "1분", "2분", "4분")) {
+  df <- bind_rows(df, get_paired_table(data, time = time))
+}
+
+for (times in list(c("30초", "1분", "2분", "4분"), c("30초", "1분", "2분"))){
+  for (variable in c("TEWL", "SH", "Tem")) {
+    df2 <- bind_rows(df2, get_multiple_table(data, variable = variable, times = times))
+  }
+}
+
+for (times in list(c("30초", "1분", "2분", "4분"), c("30초", "1분", "2분"))){
+  for (variable in c("TEWL", "SH", "Tem")) {
+    df3 <- bind_rows(df3, get_after_table(data, variable = variable, times = times))
+  }
+}
+```
+
+<hr>
+
+<div style="margin-bottom:60px;"></div>
+
+# 분석 1
+
+```{r}
+df %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "1000px")
+```
+
+# 분석 2
+
+```{r}
+df2 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "1000px")
+```
+
+# 분석 3
+
+```{r}
+df3 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "1000px")
+```
+
+# 시간에 따른 피부 장벽 기능 지표 변화
+
+```{r}
+data <- read_csv("./data/실험수치.csv")
+data <- data %>% mutate(Time = factor(Time, levels = c("30초 Before", "30초 After", "1분 Before", "1분 After", "2분 Before", "2분 After", "4분 Before", "4분 After"), labels = c("30s Before", "30s After", "1m Before", "1m After", "2m Before", "2m After", "4m Before", "4m After")))
+
+
+tewl_plot <- data %>% 
+  select(Time, TEWL_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(TEWL = round(mean(TEWL_Mean), 2), TEWL_se = sd(TEWL_Mean) / sqrt(nrow(data)/8)) %>% 
+  ggplot(aes(x = Time, y = TEWL)) +
+  geom_bar(stat = "identity", width = 0.5) + 
+  geom_errorbar(aes(x = Time, ymin = TEWL - TEWL_se, ymax = TEWL + TEWL_se), width = 0.2, color = "black") +
+  # geom_text(aes(label = TEWL), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 20)) +
+  theme_bw()
+
+sh_plot <- data %>% 
+  select(Time, SH_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(SH = round(mean(SH_Mean), 2), SH_se = sd(SH_Mean) / sqrt(nrow(data)/8)) %>% 
+  ggplot(aes(x = Time, y = SH)) +
+  geom_bar(stat = "identity", width = 0.5) +
+  geom_errorbar(aes(x = Time, ymin = SH - SH_se, ymax = SH + SH_se), width = 0.2, color = "black") +
+  # geom_text(aes(label = SH), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 20)) +
+  theme_bw()
+
+tem_plot <- data %>% 
+  select(Time, Tem_Mean) %>% 
+  group_by(Time) %>% 
+  summarise(Tem = round(mean(Tem_Mean), 2), Tem_se = sd(Tem_Mean) / sqrt(nrow(data)/8)) %>% 
+  ggplot(aes(x = Time, y = Tem)) +
+  geom_bar(stat = "identity", width = 0.5) +
+  geom_errorbar(aes(x = Time, ymin = Tem - Tem_se, ymax = Tem + Tem_se), width = 0.2, color = "black") +
+  # geom_text(aes(label = Tem), vjust = 1.6, color = "white") +
+  coord_cartesian(ylim = c(0, 40)) +
+  theme_bw() 
+
+ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
+```
+
+```{r}
+data <- data %>% rename(`Measurement Time` = Time)
+data %>% 
+  select(`Measurement Time`, TEWL_Mean) %>% 
+  group_by(`Measurement Time`) %>% 
+  summarise(TEWL = round(mean(TEWL_Mean), 2), TEWL_se = sd(TEWL_Mean) / sqrt(nrow(data)/8)) %>% 
+  mutate(Time = factor(rep(c("30s", "1m", "2m", "4m"), each = 2), levels = c("30s", "1m", "2m", "4m"))) %>% 
+  ggplot(aes(x = Time, y = TEWL, fill = `Measurement Time`)) +
+  geom_bar(stat = "identity", width = 0.5,  position = position_dodge()) +
+  geom_errorbar(aes(ymin = TEWL - TEWL_se, ymax = TEWL + TEWL_se), width = 0.2, color = "black", position = position_dodge(0.5)) +
+  scale_fill_manual("legend", values = c("30s Before" = "gray 45", "30s After" = "gray 25", "1m Before" = "gray 45", "1m After" = "gray 25", "2m Before" = "gray 45", "2m After" = "gray 25", "4m Before" = "gray 45", "4m After" = "gray 25")) +
+  coord_cartesian(ylim = c(0, 20)) +
+  theme_bw()
+```
+
+
+```{r}
+data %>% 
+  select(`Measurement Time`, TEWL_Mean) %>% 
+  group_by(`Measurement Time`) %>% 
+  summarise(TEWL = round(mean(TEWL_Mean), 2), TEWL_se = sd(TEWL_Mean) / sqrt(nrow(data)/8)) %>% 
+  mutate(Time = factor(rep(c("30s", "1m", "2m", "4m"), each = 2), levels = c("30s", "1m", "2m", "4m")))
+```
+
+
+# 각 시간별 세 지표 차이에 대한 95% 단측 신뢰구간
+
+```{r}
+
+```
+
+# 실험 직후 데이터
+
+```{r}
+after_data <- read_csv("./data/실험_직후_데이터.csv")
+```
+
+## 각 지표의 빈도표
+
+```{r}
+after_data %>% select(-이름) %>% lapply(table)
+```
+
+## 합계 히스토그램
+
+```{r}
+# hist(after_data$합계, col = "gray", xlim = c(0, 24), xlab = "합계", main = "합계 히스토그램")
+after_data %>% 
+  count(합계) %>% 
+  mutate(합계 = factor(합계, levels = 0:24)) %>% 
+  ggplot(aes(x = 합계, y = n)) + 
+  geom_bar(stat = "identity", width = 0.5) + 
+  theme_bw()
+```
