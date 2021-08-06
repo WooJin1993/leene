@@ -1,90 +1,45 @@
 `%!in%` <- Negate(`%in%`)
 
-get_paired_table <- function(data, time, tewl = "greater", sh = "less", tem = "greater") {
+get_paired_conf_int <- function(data, time, tewl = "greater", sh = "less", tem = "greater") {
     data <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
-    allegy <- ifelse(nrow(data) == 40, "알레르기 포함", "알레르기 제외")
-    variables <- c("알레르기", "시간", "지표", "정규성 p-value", "정규성 결과", "검정 방법", "검정 p-value", "검정 결과", "순열 검정 p-value", "순열 검정 결과", "요약")
-    df <- variables %>% map_dfc(setNames, object = list(character()))
+    df <- tibble(
+        Time = character(),
+        Variable = character(),
+        Mean = numeric(),
+        ymin = numeric(),
+        ymax = numeric()
+    )
     
     for (variable in c("TEWL", "SH", "Tem")) {
-        if (variable == "TEWL") {
-            alternative <- tewl
-        } else if (variable == "SH") {
-            alternative <- sh
+        if (variable %in% c("TEWL", "Tem")) {
+            alternative <- "greater"
         } else {
-            alternative <- tem
+            alternative <- "less"
         }
         
         before <- data[glue("{variable}_Mean")] %>% slice(seq(1, nrow(data), by = 2)) %>% pull(glue("{variable}_Mean"))
         after <- data[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data), by = 2)) %>% pull(glue("{variable}_Mean"))
         diff <- after - before
         
-        # 정규성 검정
-        sw <- shapiro.test(diff)
-        
-        # 대응 표본 t-검정 또는 윌콕슨 부호 순위 검정
-        if (sw$p.value > 0.05) {
-            sw_result <- "만족"
-            test_name <- "대응 표본 t-검정"
-            test <- t.test(after, before, alternative = alternative, paired = TRUE)
-        } else {
-            sw_result <- "만족 X"
-            test_name <- "윌콕슨 부호 순위 검정"
-            test <- wilcox.test(after, before, alternative = alternative, paired = TRUE)
-        }
-        
-        mean_after <- round(mean(after), 4)
-        mean_before <- round(mean(before), 4)
-        
         # 순열 검정
-        test2 <- perm.paired.loc(x = after, y = before, parameter = mean, alternative = alternative, R = 10000)
+        test <- perm.paired.loc(x = after, y = before, parameter = mean, alternative = alternative, R = 10000)
+        Mean <- test$Observed
         
-        if (variable %in% c("TEWL", "Tem")) {
-            if (test$p.value > 0.05) {
-                result <- glue("플라즈마 {time} 조사 후({mean_after}) {variable}이 {time} 조사 전({mean_before})보다 크지 않다")
-                signif <- "X"
-            } else {
-                result <- glue("플라즈마 {time} 조사 후({mean_after}) {variable}이 {time} 조사 전({mean_before})보다 크다")
-                signif <- "O"
-            }
-            
-            if (test2$p.value > 0.05) {
-                result2 <- glue("플라즈마 {time} 조사 후({mean_after}) {variable}이 {time} 조사 전({mean_before})보다 크지 않다")
-                signif2 <- "X"
-            } else {
-                result2 <- glue("플라즈마 {time} 조사 후({mean_after}) {variable}이 {time} 조사 전({mean_before})보다 크다")
-                signif2 <- "O"
-            }
+        if (alternative == "greater") {
+            ymin <- Mean - qnorm(0.95) * sd(test$Perm.values)
+            ymax <- Inf
         } else {
-            if (test$p.value > 0.05) {
-                result <- glue("플라즈마 {time} 조사 후({mean_after}) {variable}이 {time} 조사 전({mean_before})보다 작지 않다")
-                signif <- "X"
-            } else {
-                result <- glue("플라즈마 {time} 조사 후({mean_after}) {variable}이 {time} 조사 전({mean_before})보다 작다")
-                signif <- "O"
-            }
-            
-            if (test2$p.value > 0.05) {
-                result2 <- glue("플라즈마 {time} 조사 후({mean_after}) {variable}이 {time} 조사 전({mean_before})보다 작지 않다")
-                signif2 <- "X"
-            } else {
-                result2 <- glue("플라즈마 {time} 조사 후({mean_after}) {variable}이 {time} 조사 전({mean_before})보다 작다")
-                signif2 <- "O"
-            }
+            ymin <- -Inf
+            ymax <- Mean + qnorm(0.95) * sd(test$Perm.values)
         }
         
-        row <- c(
-            allegy,
-            time, 
-            variable, 
-            round(sw$p.value, 4),
-            sw_result,
-            test_name,
-            round(test$p.value, 4),
-            result,
-            round(test2$p.value, 4),
-            result2,
-            glue("{signif}/{signif2}")
+        variables <- c("Time", "Variable", "Mean", "ymin", "ymax")
+        row <- list(
+            time,
+            variable,
+            Mean,
+            ymin,
+            ymax
         )
         names(row) <- variables
         df <- bind_rows(df, row)

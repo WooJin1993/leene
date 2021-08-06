@@ -17,9 +17,9 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, comment = "
 
 <style type="text/css">
 .main-container {
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
+max-width: 1200px;
+margin-left: auto;
+margin-right: auto;
 }
 </style>
 
@@ -40,6 +40,8 @@ library(wPerm)
 
 options(scipen = 999) # turn-off scientific notation like 1e+48
 options(tibble.width = Inf)
+theme_set(theme_bw())
+# theme_set(theme(axis.line = element_blank()))
 source("./functions_table.R")
 ```
 
@@ -71,9 +73,9 @@ for (times in list(c("30초", "1분", "2분", "4분"), c("30초", "1분", "2분"
     df3 <- bind_rows(df3, get_after_table(data, variable = variable, times = times))
   }
 }
-    
+
 # 알레르기 있는 샛별이와 송이를 포함하지 않은 결과 (n = 18)
-    
+
 data <- data %>% filter(Name %!in% c("샛별이", "송이"))
 
 for (time in c("30초", "1분", "2분", "4분")) {
@@ -100,94 +102,142 @@ for (times in list(c("30초", "1분", "2분", "4분"), c("30초", "1분", "2분"
 # 분석 1
 
 ```{r}
-df %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "1000px")
+df %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "800px")
 ```
 
 # 분석 2
 
 ```{r}
-df2 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "1000px")
+df2 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "800px")
 ```
 
 # 분석 3
 
 ```{r}
-df3 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "1000px")
+df3 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "800px")
 ```
 
 # 시간에 따른 피부 장벽 기능 지표 변화
 
 ```{r}
 data <- read_csv("./data/실험수치.csv")
-data <- data %>% mutate(Time = factor(Time, levels = c("30초 Before", "30초 After", "1분 Before", "1분 After", "2분 Before", "2분 After", "4분 Before", "4분 After"), labels = c("30s Before", "30s After", "1m Before", "1m After", "2m Before", "2m After", "4m Before", "4m After")))
-
+data <- data %>% rename(`Measurement Time` = Time)
+level <- c("30초 Before", "30초 After", "1분 Before", "1분 After", "2분 Before", "2분 After", "4분 Before", "4분 After")
+new_label <- c("30s Before", "30s After", "1m Before", "1m After", "2m Before", "2m After", "4m Before", "4m After")
+data <- data %>% mutate(`Measurement Time` = factor(`Measurement Time`, levels = level, labels = new_label))
+data <- data %>% mutate(Time = factor(rep(c("30s", "1m", "2m", "4m"), each = 2, times = 20), levels = c("30s", "1m", "2m", "4m")))
 
 tewl_plot <- data %>% 
-  select(Time, TEWL_Mean) %>% 
-  group_by(Time) %>% 
+  select(Time, `Measurement Time`, TEWL_Mean) %>% 
+  group_by(Time, `Measurement Time`) %>% 
   summarise(TEWL = round(mean(TEWL_Mean), 2), TEWL_se = sd(TEWL_Mean) / sqrt(nrow(data)/8)) %>% 
-  ggplot(aes(x = Time, y = TEWL)) +
-  geom_bar(stat = "identity", width = 0.5) + 
-  geom_errorbar(aes(x = Time, ymin = TEWL - TEWL_se, ymax = TEWL + TEWL_se), width = 0.2, color = "black") +
-  # geom_text(aes(label = TEWL), vjust = 1.6, color = "white") +
-  coord_cartesian(ylim = c(0, 20)) +
-  theme_bw()
+  ggplot(aes(x = Time, y = TEWL, fill = `Measurement Time`)) +
+  geom_bar(stat = "identity", width = 0.5, position = position_dodge()) +
+  geom_errorbar(aes(ymin = TEWL - TEWL_se, ymax = TEWL + TEWL_se), width = 0.2, color = "black", position = position_dodge(0.5)) +
+  scale_fill_manual("legend", values = c("30s Before" = "gray 45", "30s After" = "gray 25", "1m Before" = "gray 45", "1m After" = "gray 25", "2m Before" = "gray 45", "2m After" = "gray 25", "4m Before" = "gray 45", "4m After" = "gray 25")) +
+  labs(x = "") +
+  ylim(c(0, 20)) + 
+  theme(legend.position = "none", axis.line=element_blank())
 
 sh_plot <- data %>% 
-  select(Time, SH_Mean) %>% 
-  group_by(Time) %>% 
+  select(Time, `Measurement Time`, SH_Mean) %>% 
+  group_by(Time, `Measurement Time`) %>% 
   summarise(SH = round(mean(SH_Mean), 2), SH_se = sd(SH_Mean) / sqrt(nrow(data)/8)) %>% 
-  ggplot(aes(x = Time, y = SH)) +
-  geom_bar(stat = "identity", width = 0.5) +
-  geom_errorbar(aes(x = Time, ymin = SH - SH_se, ymax = SH + SH_se), width = 0.2, color = "black") +
-  # geom_text(aes(label = SH), vjust = 1.6, color = "white") +
-  coord_cartesian(ylim = c(0, 20)) +
-  theme_bw()
+  ggplot(aes(x = Time, y = SH, fill = `Measurement Time`)) +
+  geom_bar(stat = "identity", width = 0.5, position = position_dodge()) +
+  geom_errorbar(aes(ymin = SH - SH_se, ymax = SH + SH_se), width = 0.2, color = "black", position = position_dodge(0.5)) +
+  scale_fill_manual("legend", values = c("30s Before" = "gray 45", "30s After" = "gray 25", "1m Before" = "gray 45", "1m After" = "gray 25", "2m Before" = "gray 45", "2m After" = "gray 25", "4m Before" = "gray 45", "4m After" = "gray 25")) +
+  labs(x = "") +
+  ylim(c(0, 20)) + 
+  theme(legend.position = "none")
 
 tem_plot <- data %>% 
-  select(Time, Tem_Mean) %>% 
-  group_by(Time) %>% 
+  select(Time, `Measurement Time`, Tem_Mean) %>% 
+  group_by(Time, `Measurement Time`) %>% 
   summarise(Tem = round(mean(Tem_Mean), 2), Tem_se = sd(Tem_Mean) / sqrt(nrow(data)/8)) %>% 
-  ggplot(aes(x = Time, y = Tem)) +
-  geom_bar(stat = "identity", width = 0.5) +
-  geom_errorbar(aes(x = Time, ymin = Tem - Tem_se, ymax = Tem + Tem_se), width = 0.2, color = "black") +
-  # geom_text(aes(label = Tem), vjust = 1.6, color = "white") +
-  coord_cartesian(ylim = c(0, 40)) +
-  theme_bw() 
+  ggplot(aes(x = Time, y = Tem, fill = `Measurement Time`)) +
+  geom_bar(stat = "identity", width = 0.5, position = position_dodge()) +
+  geom_errorbar(aes(ymin = Tem - Tem_se, ymax = Tem + Tem_se), width = 0.2, color = "black", position = position_dodge(0.5)) +
+  scale_fill_manual("legend", values = c("30s Before" = "gray 45", "30s After" = "gray 25", "1m Before" = "gray 45", "1m After" = "gray 25", "2m Before" = "gray 45", "2m After" = "gray 25", "4m Before" = "gray 45", "4m After" = "gray 25")) +
+  ylim(c(0, 40)) + 
+  theme(legend.position = "none")
 
 ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
 ```
 
-```{r}
-data <- data %>% rename(`Measurement Time` = Time)
-data %>% 
-  select(`Measurement Time`, TEWL_Mean) %>% 
-  group_by(`Measurement Time`) %>% 
-  summarise(TEWL = round(mean(TEWL_Mean), 2), TEWL_se = sd(TEWL_Mean) / sqrt(nrow(data)/8)) %>% 
-  mutate(Time = factor(rep(c("30s", "1m", "2m", "4m"), each = 2), levels = c("30s", "1m", "2m", "4m"))) %>% 
-  ggplot(aes(x = Time, y = TEWL, fill = `Measurement Time`)) +
-  geom_bar(stat = "identity", width = 0.5,  position = position_dodge()) +
-  geom_errorbar(aes(ymin = TEWL - TEWL_se, ymax = TEWL + TEWL_se), width = 0.2, color = "black", position = position_dodge(0.5)) +
-  scale_fill_manual("legend", values = c("30s Before" = "gray 45", "30s After" = "gray 25", "1m Before" = "gray 45", "1m After" = "gray 25", "2m Before" = "gray 45", "2m After" = "gray 25", "4m Before" = "gray 45", "4m After" = "gray 25")) +
-  coord_cartesian(ylim = c(0, 20)) +
-  theme_bw()
-```
+# 관측치 각각 살려서 평균값 비교
 
+## TEWL
 
 ```{r}
-data %>% 
-  select(`Measurement Time`, TEWL_Mean) %>% 
-  group_by(`Measurement Time`) %>% 
-  summarise(TEWL = round(mean(TEWL_Mean), 2), TEWL_se = sd(TEWL_Mean) / sqrt(nrow(data)/8)) %>% 
-  mutate(Time = factor(rep(c("30s", "1m", "2m", "4m"), each = 2), levels = c("30s", "1m", "2m", "4m")))
+data %>%
+  ggplot(aes(x = `Measurement Time`, y = TEWL_Mean)) +
+  geom_point(aes(shape = Time)) +
+  geom_errorbar(aes(ymin = TEWL_Mean, ymax = TEWL_Mean), width = 0.5, data = data %>% group_by(`Measurement Time`) %>% summarise(TEWL_Mean = mean(TEWL_Mean))) +
+  scale_shape_manual("legend", values = c("30s" = 1, "1m" = 2, "2m" = 5,"4m" = 6)) +
+  labs(x ="Time", y = "TEWL") +
+  ylim(c(0, 50)) +
+  theme(legend.position = "none")
 ```
 
+## SH
+
+```{r}
+data %>%
+  ggplot(aes(x = `Measurement Time`, y = SH_Mean)) +
+  geom_point(aes(shape = Time)) +
+  geom_errorbar(aes(ymin = SH_Mean, ymax = SH_Mean), width = 0.5, data = data %>% group_by(`Measurement Time`) %>% summarise(SH_Mean = mean(SH_Mean))) +
+  scale_shape_manual("legend", values = c("30s" = 1, "1m" = 2, "2m" = 5,"4m" = 6)) +
+  labs(x = "Time", y = "SH") +
+  ylim(c(0, 60)) +
+  theme(legend.position = "none")
+```
+
+## Tem
+
+```{r}
+data %>%
+  ggplot(aes(x = `Measurement Time`, y = Tem_Mean)) +
+  geom_point(aes(shape = Time)) +
+  geom_errorbar(aes(ymin = Tem_Mean, ymax = Tem_Mean), width = 0.5, data = data %>% group_by(`Measurement Time`) %>% summarise(Tem_Mean = mean(Tem_Mean))) +
+  scale_shape_manual("legend", values = c("30s" = 1, "1m" = 2, "2m" = 5,"4m" = 6)) +
+  labs(x = "Time", y = "Tem") +
+  ylim(c(34, 40)) +
+  theme(legend.position = "none")
+```
 
 # 각 시간별 세 지표 차이에 대한 95% 단측 신뢰구간
 
 ```{r}
+data <- read_csv("./data/실험수치.csv")
+df4 <- tibble(
+  Time = character(),
+  Variable = character(),
+  Mean = numeric(),
+  ymin = numeric(),
+  ymax = numeric()
+)
 
+for (time in c("30초", "1분", "2분", "4분")) {
+  df4 <- bind_rows(df4, get_paired_conf_int(data, time = time))  
+}
+
+df4 <- df4 %>% 
+  mutate(
+    Time = factor(Time, levels = c("30초", "1분", "2분", "4분"), labels = c("30s", "1m", "2m", "4m")),
+    Variable = factor(Variable, levels = c("TEWL", "SH", "Tem"))
+  )
 ```
+
+```{r}
+df4 %>% ggplot(aes(x = Time, y = Mean, fill = Variable)) + 
+  geom_bar(stat = "identity", width = 0.5, position = position_dodge()) +
+  geom_errorbar(aes(ymin = Mean, ymax = Mean), width = 0.2, color = "black", position = position_dodge(0.5)) +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2, color = "black", position = position_dodge(0.5)) +
+  scale_fill_manual("legend", values = c("TEWL" = "gray 65", "SH" = "gray 35", "Tem" = "gray 5")) +
+  guides(fill = guide_legend("Skin barrier function\nparameters"))
+```
+
 
 # 실험 직후 데이터
 
@@ -201,14 +251,13 @@ after_data <- read_csv("./data/실험_직후_데이터.csv")
 after_data %>% select(-이름) %>% lapply(table)
 ```
 
-## 합계 히스토그램
+## 합계 막대 그래프
 
 ```{r}
-# hist(after_data$합계, col = "gray", xlim = c(0, 24), xlab = "합계", main = "합계 히스토그램")
 after_data %>% 
   count(합계) %>% 
   mutate(합계 = factor(합계, levels = 0:24)) %>% 
   ggplot(aes(x = 합계, y = n)) + 
   geom_bar(stat = "identity", width = 0.5) + 
-  theme_bw()
+  labs(x = "Sum", y = "Frequency")
 ```
