@@ -33,6 +33,7 @@ library(ggplot2)
 library(ggpubr)
 library(glue)
 library(kableExtra)
+library(latex2exp)
 library(lawstat)
 library(purrr)
 library(readr)
@@ -108,13 +109,13 @@ df %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "800px"
 # 분석 2
 
 ```{r}
-df2 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "800px")
+df2 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "700px")
 ```
 
 # 분석 3
 
 ```{r}
-df3 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "800px")
+df3 %>% kbl() %>% kable_paper() %>% scroll_box(width = "1500px", height = "700px")
 ```
 
 # 시간에 따른 피부 장벽 기능 지표 변화
@@ -126,7 +127,9 @@ level <- c("30초 Before", "30초 After", "1분 Before", "1분 After", "2분 Bef
 new_label <- c("30s Before", "30s After", "1m Before", "1m After", "2m Before", "2m After", "4m Before", "4m After")
 data <- data %>% mutate(`Measurement Time` = factor(`Measurement Time`, levels = level, labels = new_label))
 data <- data %>% mutate(Time = factor(rep(c("30s", "1m", "2m", "4m"), each = 2, times = 20), levels = c("30s", "1m", "2m", "4m")))
+```
 
+```{r}
 tewl_plot <- data %>% 
   select(Time, `Measurement Time`, TEWL_Mean) %>% 
   group_by(Time, `Measurement Time`) %>% 
@@ -165,19 +168,21 @@ tem_plot <- data %>%
 ggarrange(tewl_plot, sh_plot, tem_plot, nrow = 3)
 ```
 
-# 관측치 각각 살려서 평균값 비교
+# 상자그림으로 평균값 비교
 
 ## TEWL
 
 ```{r}
 data %>%
   ggplot(aes(x = `Measurement Time`, y = TEWL_Mean)) +
-  geom_point(aes(shape = Time)) +
-  geom_errorbar(aes(ymin = TEWL_Mean, ymax = TEWL_Mean), width = 0.5, data = data %>% group_by(`Measurement Time`) %>% summarise(TEWL_Mean = mean(TEWL_Mean))) +
-  scale_shape_manual("legend", values = c("30s" = 1, "1m" = 2, "2m" = 5,"4m" = 6)) +
-  labs(x ="Time", y = "TEWL") +
-  ylim(c(0, 50)) +
-  theme(legend.position = "none")
+  geom_boxplot(linetype = "dashed") +
+  stat_boxplot(aes(ymin = ..lower.., ymax = ..upper..)) +
+  stat_boxplot(aes(ymin = ..ymax..), geom = "errorbar", width = 0.3) +
+  stat_boxplot(aes(ymax = ..ymin..), geom = "errorbar", width = 0.3) +
+  geom_point(aes(x = `Measurement Time`, y = TEWL_Mean), shape = "X", data = data %>% group_by(`Measurement Time`) %>% summarise(TEWL_Mean = mean(TEWL_Mean))) +
+  labs(x ="Time", y = TeX("TEWL ($g/m^2/h$)")) +
+  scale_x_discrete(limits = c("30s Before", "30s After", "", "1m Before", "1m After", "", "2m Before", "2m After", "", "4m Before", "4m After")) +
+  ylim(c(0, 50))
 ```
 
 ## SH
@@ -185,12 +190,15 @@ data %>%
 ```{r}
 data %>%
   ggplot(aes(x = `Measurement Time`, y = SH_Mean)) +
-  geom_point(aes(shape = Time)) +
-  geom_errorbar(aes(ymin = SH_Mean, ymax = SH_Mean), width = 0.5, data = data %>% group_by(`Measurement Time`) %>% summarise(SH_Mean = mean(SH_Mean))) +
-  scale_shape_manual("legend", values = c("30s" = 1, "1m" = 2, "2m" = 5,"4m" = 6)) +
-  labs(x = "Time", y = "SH") +
-  ylim(c(0, 60)) +
-  theme(legend.position = "none")
+  geom_boxplot(linetype = "dashed") +
+  stat_boxplot(aes(ymin = ..lower.., ymax = ..upper..)) +
+  stat_boxplot(aes(ymin = ..ymax..), geom = "errorbar", width = 0.3) +
+  stat_boxplot(aes(ymax = ..ymin..), geom = "errorbar", width = 0.3) +
+  geom_point(aes(x = `Measurement Time`, y = SH_Mean), shape = "X", data = data %>% group_by(`Measurement Time`) %>% summarise(SH_Mean = mean(SH_Mean))) +
+  geom_bracket(xmin = "2m Before", xmax = "2m After", y.position = 50, label = "p < 0.05", label.size = 2.5) +
+  labs(x ="Time", y = "Skin hydration (A.U.)") +
+  scale_x_discrete(limits = c("30s Before", "30s After", "", "1m Before", "1m After", "", "2m Before", "2m After", "", "4m Before", "4m After")) +
+  ylim(c(0, 60))
 ```
 
 ## Tem
@@ -198,12 +206,15 @@ data %>%
 ```{r}
 data %>%
   ggplot(aes(x = `Measurement Time`, y = Tem_Mean)) +
-  geom_point(aes(shape = Time)) +
-  geom_errorbar(aes(ymin = Tem_Mean, ymax = Tem_Mean), width = 0.5, data = data %>% group_by(`Measurement Time`) %>% summarise(Tem_Mean = mean(Tem_Mean))) +
-  scale_shape_manual("legend", values = c("30s" = 1, "1m" = 2, "2m" = 5,"4m" = 6)) +
-  labs(x = "Time", y = "Tem") +
-  ylim(c(34, 40)) +
-  theme(legend.position = "none")
+  geom_boxplot(linetype = "dashed") +
+  stat_boxplot(aes(ymin = ..lower.., ymax = ..upper..)) +
+  stat_boxplot(aes(ymin = ..ymax..), geom = "errorbar", width = 0.3) +
+  stat_boxplot(aes(ymax = ..ymin..), geom = "errorbar", width = 0.3) +
+  geom_point(aes(x = `Measurement Time`, y = Tem_Mean), shape = "X", data = data %>% group_by(`Measurement Time`) %>% summarise(Tem_Mean = mean(Tem_Mean))) +
+  geom_bracket(xmin = "4m Before", xmax = "4m After", y.position = 39, label = "p < 0.05", label.size = 2.5) +
+  labs(x ="Time", y = TeX("Temperature ($\\degree C$)")) +
+  scale_x_discrete(limits = c("30s Before", "30s After", "", "1m Before", "1m After", "", "2m Before", "2m After", "", "4m Before", "4m After")) +
+  ylim(c(35, 39))
 ```
 
 # 각 시간별 세 지표 차이에 대한 95% 단측 신뢰구간
