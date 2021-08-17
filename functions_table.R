@@ -3,11 +3,11 @@
 get_paired_conf_int <- function(data, time, tewl = "greater", sh = "less", tem = "greater") {
     data <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
     df <- tibble(
-        Time = character(),
+        Time     = character(),
         Variable = character(),
-        Mean = numeric(),
-        ymin = numeric(),
-        ymax = numeric()
+        Mean     = numeric(),
+        ymin     = numeric(),
+        ymax     = numeric()
     )
     
     for (variable in c("TEWL", "SH", "Tem")) {
@@ -18,8 +18,8 @@ get_paired_conf_int <- function(data, time, tewl = "greater", sh = "less", tem =
         }
         
         before <- data[glue("{variable}_Mean")] %>% slice(seq(1, nrow(data), by = 2)) %>% pull(glue("{variable}_Mean"))
-        after <- data[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data), by = 2)) %>% pull(glue("{variable}_Mean"))
-        diff <- after - before
+        after  <- data[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data), by = 2)) %>% pull(glue("{variable}_Mean"))
+        diff   <- after - before
         
         # 순열 검정
         test <- perm.paired.loc(x = after, y = before, parameter = mean, alternative = alternative, R = 10000)
@@ -81,7 +81,7 @@ get_paired_table <- function(data, time, tewl = "greater", sh = "less", tem = "g
             test <- wilcox.test(after, before, alternative = alternative, paired = TRUE)
         }
         
-        mean_after <- round(mean(after), 4)
+        mean_after  <- round(mean(after), 4)
         mean_before <- round(mean(before), 4)
         
         # 순열 검정
@@ -142,20 +142,20 @@ get_paired_table <- function(data, time, tewl = "greater", sh = "less", tem = "g
 }
 
 get_multiple_table <- function(data, variable, times) {
-    allegy <- ifelse(nrow(data) == 160, "알레르기 포함", "알레르기 제외")
-    test_data <- list()
+    allegy     <- ifelse(nrow(data) == 160, "알레르기 포함", "알레르기 제외")
+    test_data  <- list()
     Difference <- c()
-    Time <- rep(times, each = nrow(data) / 8)
-    Normality <- list()
-    variables <- c("알레르기", "시간", "지표", "정규성 p-value", "정규성 결과", "검정 방법", "검정 p-value", "검정 결과", "순열 검정 p-value", "순열 검정 결과", "요약")
+    Time       <- rep(times, each = nrow(data) / 8)
+    Normality  <- list()
+    variables  <- c("알레르기", "시간", "지표", "정규성 p-value", "정규성 결과", "검정 방법", "검정 p-value", "검정 결과", "순열 검정 p-value", "순열 검정 결과", "요약")
     df <- variables %>% map_dfc(setNames, object = list(character()))
     
     for (time in times) {
         data_by_time <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
-        y_before <- data_by_time[glue("{variable}_Mean")] %>% slice(seq(1, nrow(data_by_time), by = 2)) %>% pull(glue("{variable}_Mean"))
-        y_after <- data_by_time[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data_by_time), by = 2)) %>% pull(glue("{variable}_Mean"))
-        y_diff <- y_after - y_before
-        Difference <- append(Difference, y_diff)
+        y_before     <- data_by_time[glue("{variable}_Mean")] %>% slice(seq(1, nrow(data_by_time), by = 2)) %>% pull(glue("{variable}_Mean"))
+        y_after      <- data_by_time[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data_by_time), by = 2)) %>% pull(glue("{variable}_Mean"))
+        y_diff       <- y_after - y_before
+        Difference   <- append(Difference, y_diff)
         Normality[[time]] <- shapiro.test(y_diff)
     }
     
@@ -182,8 +182,8 @@ get_multiple_table <- function(data, variable, times) {
     }
     
     multiple_test2 <- perm.oneway.anova(x = test_data$Difference, y = test_data$Time, R = 10000)
-    time <- paste(times, collapse = ", ")
-    norm_pvalue <- paste(round(map_dbl(Normality, "p.value"), 4), collapse = ", ")
+    time           <- paste(times, collapse = ", ")
+    norm_pvalue    <- paste(round(map_dbl(Normality, "p.value"), 4), collapse = ", ")
     
     
     if (multiple_test$p.value > 0.05) {
@@ -221,18 +221,18 @@ get_multiple_table <- function(data, variable, times) {
 
 
 get_after_table <- function(data, variable, times) {
-    allegy <- ifelse(nrow(data) == 160, "알레르기 포함", "알레르기 제외")
+    allegy    <- ifelse(nrow(data) == 160, "알레르기 포함", "알레르기 제외")
     test_data <- list()
-    After <- c()
-    Time <- rep(times, each = nrow(data) / 8)
+    After     <- c()
+    Time      <- rep(times, each = nrow(data) / 8)
     Normality <- list()
     variables <- c("알레르기", "시간", "지표", "정규성 p-value", "정규성 결과", "검정 방법", "검정 p-value", "검정 결과", "순열 검정 p-value", "순열 검정 결과", "요약")
     df <- variables %>% map_dfc(setNames, object = list(character()))
     
     for (time in times) {
         data_by_time <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
-        y_after <- data_by_time[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data_by_time), by = 2)) %>% pull(glue("{variable}_Mean"))
-        After <- append(After, y_after)
+        y_after      <- data_by_time[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data_by_time), by = 2)) %>% pull(glue("{variable}_Mean"))
+        After        <- append(After, y_after)
         Normality[[time]] <- shapiro.test(y_after)
     }
     
@@ -259,8 +259,8 @@ get_after_table <- function(data, variable, times) {
     }
     
     multiple_test2 <- perm.oneway.anova(x = test_data$After, y = test_data$Time, R = 10000)
-    time <- paste(times, collapse = ", ")
-    norm_pvalue <- paste(round(map_dbl(Normality, "p.value"), 4), collapse = ", ")
+    time           <- paste(times, collapse = ", ")
+    norm_pvalue    <- paste(round(map_dbl(Normality, "p.value"), 4), collapse = ", ")
     
     if (multiple_test$p.value > 0.05) {
         result <- glue("{time}의 플라즈마 조사 후 {variable} 값에 유의미한 차이가 없음")
@@ -297,10 +297,10 @@ get_after_table <- function(data, variable, times) {
 
 
 get_paired_table <- function(data, time, tewl = "greater", sh = "less", tem = "greater") {
-    data <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
-    allegy <- ifelse(nrow(data) == 40, "알레르기 포함", "알레르기 제외")
+    data      <- data %>% filter(Time %in% c(glue("{time} Before"), glue("{time} After")))
+    allegy    <- ifelse(nrow(data) == 40, "알레르기 포함", "알레르기 제외")
     variables <- c("알레르기", "시간", "지표", "정규성 p-value", "정규성 결과", "검정 방법", "검정 p-value", "검정 결과", "순열 검정 p-value", "순열 검정 결과", "요약")
-    df <- variables %>% map_dfc(setNames, object = list(character()))
+    df        <- variables %>% map_dfc(setNames, object = list(character()))
     
     for (variable in c("TEWL", "SH", "Tem")) {
         if (variable == "TEWL") {
@@ -312,8 +312,8 @@ get_paired_table <- function(data, time, tewl = "greater", sh = "less", tem = "g
         }
         
         before <- data[glue("{variable}_Mean")] %>% slice(seq(1, nrow(data), by = 2)) %>% pull(glue("{variable}_Mean"))
-        after <- data[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data), by = 2)) %>% pull(glue("{variable}_Mean"))
-        diff <- after - before
+        after  <- data[glue("{variable}_Mean")] %>% slice(seq(2, nrow(data), by = 2)) %>% pull(glue("{variable}_Mean"))
+        diff   <- after - before
         
         # 정규성 검정
         sw <- shapiro.test(diff)
@@ -329,7 +329,7 @@ get_paired_table <- function(data, time, tewl = "greater", sh = "less", tem = "g
             test <- wilcox.test(after, before, alternative = alternative, paired = TRUE)
         }
         
-        mean_after <- round(mean(after), 4)
+        mean_after  <- round(mean(after), 4)
         mean_before <- round(mean(before), 4)
         
         # 순열 검정
